@@ -86,6 +86,13 @@ document.addEventListener('DOMContentLoaded', function () {
         return '';
     }
 
+    function showFeedback(msg) {
+        const el = document.getElementById('feedback-message');
+        el.textContent = msg;
+        el.classList.add('visible');
+        setTimeout(() => el.classList.remove('visible'), 1800);
+    }
+
     function addGame(name, imageUrl) {
         if (!name.trim()) return;
 
@@ -99,6 +106,7 @@ document.addEventListener('DOMContentLoaded', function () {
         games.unshift(newGame);
         saveGames();
         renderGames();
+        showFeedback('Jogo adicionado!');
         gameNameInput.value = '';
         gameImageInput.value = '';
         gameNameInput.focus();
@@ -298,10 +306,23 @@ document.addEventListener('DOMContentLoaded', function () {
 
     modalConfirmBtn.addEventListener('click', function () {
         if (gameToRemove) {
-            games = games.filter(game => game.id !== gameToRemove);
-            saveGames();
-            renderGames();
-            gameToRemove = null;
+            const li = document.querySelector(`.game-item[data-id="${gameToRemove}"]`);
+            if (li) {
+                li.classList.add('removing');
+                setTimeout(() => {
+                    games = games.filter(game => game.id !== gameToRemove);
+                    saveGames();
+                    renderGames();
+                    showFeedback('Jogo removido!');
+                    gameToRemove = null;
+                }, 300);
+            } else {
+                games = games.filter(game => game.id !== gameToRemove);
+                saveGames();
+                renderGames();
+                showFeedback('Jogo removido!');
+                gameToRemove = null;
+            }
         }
         confirmModal.style.display = 'none';
     });
