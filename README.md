@@ -29,7 +29,3 @@ O projeto possui os seguintes arquivos:
 - HTML
 - CSS
 - JavaScript
-
-## Contribuições
-
-Contribuições são bem-vindas! Sinta-se à vontade para abrir uma issue ou enviar um pull request.

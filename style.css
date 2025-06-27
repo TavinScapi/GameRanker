@@ -340,6 +340,91 @@ body {
     cursor: pointer;
 }
 
+.games-utils {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    /* Alinha os itens nas extremidades */
+    gap: 10px;
+    margin-bottom: 20px;
+    color: var(--steam-text);
+}
+
+.games-utils> :not(#games-count) {
+    /* Agrupa os botões e o label à esquerda */
+    display: flex;
+    gap: 10px;
+}
+
+#games-count {
+    margin-left: auto;
+    font-weight: bold;
+}
+
+.games-utils button,
+.games-utils .import-label {
+    background: var(--steam-highlight);
+    color: #fff;
+    border: none;
+    border-radius: 3px;
+    padding: 7px 12px;
+    font-size: 13px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.games-utils button:hover,
+.games-utils .import-label:hover {
+    background: var(--steam-accent);
+    color: #000;
+}
+
+.import-label {
+    cursor: pointer;
+    margin: 0;
+}
+
+/* Exibição em grade */
+.games-list.grid-view {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 20px;
+    padding: 0;
+}
+
+.games-list.grid-view .game-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: var(--steam-gray);
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    padding: 18px 12px 12px 12px;
+    margin: 0;
+}
+
+.games-list.grid-view .game-image {
+    width: 120px;
+    height: 120px;
+    object-fit: cover;
+    border-radius: 6px;
+    margin-bottom: 10px;
+    background: #222;
+}
+
+.games-list.grid-view .game-info {
+    text-align: center;
+    margin-bottom: 8px;
+}
+
+.games-list.grid-view .game-actions {
+    justify-content: center;
+}
+
 @media (max-width: 768px) {
     .game-item {
         flex-wrap: wrap;
@@ -359,4 +444,15 @@ body {
     .input-group {
         flex-direction: column;
     }
+}
+
+.game-text {
+    color: #66c0f4;
+    /* Azul claro Steam */
+}
+
+.ranker-text {
+    color: #FFD700;
+    /* Dourado */
+    font-weight: bold;
 }

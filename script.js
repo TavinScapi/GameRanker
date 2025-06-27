@@ -6,48 +6,64 @@ document.addEventListener('DOMContentLoaded', function () {
     const confirmModal = document.getElementById('confirm-modal');
     const modalConfirmBtn = document.getElementById('modal-confirm-btn');
     const modalCancelBtn = document.getElementById('modal-cancel-btn');
+    const gamesCount = document.getElementById('games-count');
+    const exportJsonBtn = document.getElementById('export-json-btn');
+    const exportTxtBtn = document.getElementById('export-txt-btn');
+    const importFileInput = document.getElementById('import-file-input');
+    const toggleViewBtn = document.getElementById('toggle-view-btn');
+    const searchInput = document.getElementById('search-input');
 
     let games = JSON.parse(localStorage.getItem('games')) || [];
     let gameToRemove = null;
+    let isGridView = JSON.parse(localStorage.getItem('isGridView')) || false;
 
-    function renderGames() {
+    function renderGames(filter = '') {
         gamesList.innerHTML = '';
 
-        if (games.length === 0) {
+        // Alterna a classe da lista
+        if (isGridView) {
+            gamesList.classList.add('grid-view');
+            toggleViewBtn.innerHTML = '<i class="fas fa-list"></i>';
+        } else {
+            gamesList.classList.remove('grid-view');
+            toggleViewBtn.innerHTML = '<i class="fas fa-th-large"></i>';
+        }
+
+        // Filtra os jogos pelo nome
+        const filteredGames = games
+            .map((game, index) => ({ ...game, originalIndex: index }))
+            .filter(game => game.name.toLowerCase().includes(filter.toLowerCase()));
+
+        // Atualiza a contagem de jogos
+        gamesCount.textContent = `Jogos na lista: ${filteredGames.length}`;
+
+        if (filteredGames.length === 0) {
             gamesList.innerHTML = `
                 <div class="empty-message">
                     <i class="fas fa-gamepad"></i>
-                    Sua lista de jogos está vazia.<br>
-                    Adicione seus jogos favoritos para começar!
+                    Nenhum jogo encontrado.
                 </div>
             `;
             return;
         }
 
-        games.forEach((game, index) => {
+        filteredGames.forEach((game) => {
             const gameItem = document.createElement('li');
-            gameItem.className = `game-item ${getRankClass(index)}`;
+            gameItem.className = `game-item ${getRankClass(game.originalIndex)}`;
             gameItem.draggable = true;
             gameItem.dataset.id = game.id;
-
-            if (game.pinned) {
-                gameItem.classList.add('pinned');
-            }
 
             const imageContent = game.imageUrl
                 ? `<img src="${game.imageUrl}" class="game-image" alt="${game.name}" onerror="this.parentNode.innerHTML='<div class=\'game-image\' style=\'background:var(--steam-gray);display:flex;align-items:center;justify-content:center;\'><i class=\'fas fa-gamepad\'></i></div>'">`
                 : `<div class="game-image" style="background:var(--steam-gray);display:flex;align-items:center;justify-content:center;"><i class="fas fa-gamepad"></i></div>`;
 
             gameItem.innerHTML = `
-                <div class="rank">${index + 1}</div>
+                <div class="rank">${game.originalIndex + 1}</div>
                 ${imageContent}
                 <div class="game-info">
-                    <div class="game-name">${game.name} ${game.pinned ? '<span class="pinned-label">FIXO</span>' : ''}</div>
+                    <div class="game-name">${game.name}</div>
                 </div>
                 <div class="game-actions">
-                    <button class="action-btn pin-btn" data-id="${game.id}" title="${game.pinned ? 'Desfixar' : 'Fixar'}">
-                        <i class="fas ${game.pinned ? 'fa-lock' : 'fa-thumbtack'}"></i>
-                    </button>
                     <button class="action-btn edit-btn" data-id="${game.id}" title="Editar">
                         <i class="fas fa-edit"></i>
                     </button>
@@ -113,16 +129,29 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function saveGames() {
-        games.sort((a, b) => {
-            if (a.pinned && !b.pinned) return -1;
-            if (!a.pinned && b.pinned) return 1;
-            return 0;
-        });
+        // Não precisa mais ordenar por pinned
         localStorage.setItem('games', JSON.stringify(games));
     }
 
+    function autoScrollDuringDrag(e) {
+        const padding = 100; // margem superior/inferior para ativar scroll
+        const scrollSpeed = 10;
+
+        const y = e.clientY;
+        const windowHeight = window.innerHeight;
+
+        if (y < padding) {
+            // scroll para cima
+            window.scrollBy(0, -scrollSpeed);
+        } else if (y > windowHeight - padding) {
+            // scroll para baixo
+            window.scrollBy(0, scrollSpeed);
+        }
+    }
+
+
     function setupDragAndDrop() {
-        const items = document.querySelectorAll('.game-item:not(.pinned)');
+        const items = document.querySelectorAll('.game-item');
 
         items.forEach(item => {
             item.addEventListener('dragstart', function () {
@@ -140,19 +169,31 @@ document.addEventListener('DOMContentLoaded', function () {
             if (!draggingItem) return;
 
             const afterElement = getDragAfterElement(this, e.clientY);
-            const pinnedItems = Array.from(this.querySelectorAll('.pinned'));
-            const lastPinnedItem = pinnedItems[pinnedItems.length - 1];
 
-            if (lastPinnedItem && (!afterElement ||
-                this.compareDocumentPosition(afterElement) & Node.DOCUMENT_POSITION_FOLLOWING &&
-                lastPinnedItem.compareDocumentPosition(afterElement) & Node.DOCUMENT_POSITION_FOLLOWING)) {
-                this.insertBefore(draggingItem, lastPinnedItem.nextSibling);
-            } else if (afterElement == null) {
+            if (afterElement == null) {
                 this.appendChild(draggingItem);
             } else {
                 this.insertBefore(draggingItem, afterElement);
             }
         });
+
+        gamesList.addEventListener('dragover', function (e) {
+            e.preventDefault();
+            autoScrollDuringDrag(e); // ← aqui!
+
+            const draggingItem = document.querySelector('.dragging');
+            if (!draggingItem) return;
+
+            const afterElement = getDragAfterElement(this, e.clientY);
+
+            if (afterElement == null) {
+                this.appendChild(draggingItem);
+            } else {
+                this.insertBefore(draggingItem, afterElement);
+            }
+        });
+
+
 
         gamesList.addEventListener('drop', function (e) {
             e.preventDefault();
@@ -166,10 +207,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (gameIndex === -1) return;
 
             const [movedGame] = games.splice(gameIndex, 1);
-            const pinnedCount = games.filter(g => g.pinned).length;
-            const adjustedIndex = Math.max(newIndex, pinnedCount);
-
-            games.splice(adjustedIndex, 0, movedGame);
+            games.splice(newIndex, 0, movedGame);
             saveGames();
             renderGames();
         });
@@ -191,12 +229,8 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function setupEventListeners() {
-        document.querySelectorAll('.pin-btn').forEach(btn => {
-            btn.addEventListener('click', function () {
-                const id = this.dataset.id;
-                togglePinGame(id);
-            });
-        });
+        // Remover o listener do botão de fixar
+        // document.querySelectorAll('.pin-btn').forEach(btn => { ... });
 
         document.querySelectorAll('.edit-btn').forEach(btn => {
             btn.addEventListener('click', function () {
@@ -280,6 +314,51 @@ document.addEventListener('DOMContentLoaded', function () {
         if (e.target === confirmModal) {
             confirmModal.style.display = 'none';
         }
+    });
+
+    // Alternar visualização
+    toggleViewBtn.addEventListener('click', function () {
+        isGridView = !isGridView;
+        localStorage.setItem('isGridView', JSON.stringify(isGridView));
+        renderGames();
+    });
+
+    // Atualize o listener do campo de busca:
+    searchInput.addEventListener('input', function () {
+        renderGames(this.value);
+    });
+
+    // Função para exportar como JSON
+    exportJsonBtn.addEventListener('click', function () {
+        const dataStr = JSON.stringify(games, null, 2);
+        const blob = new Blob([dataStr], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'gameranker.json';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    });
+
+    // Função para exportar como TXT
+    exportTxtBtn.addEventListener('click', function () {
+        let txt = '';
+        games.forEach((game, idx) => {
+            txt += `${idx + 1}. ${game.name}\n`;
+        });
+        const blob = new Blob([txt], { type: "text/plain" });
+        const url = URL.createObjectURL(blob);
+
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'gameranker.txt';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
     });
 
     renderGames();
