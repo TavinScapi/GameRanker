@@ -12,6 +12,8 @@ document.addEventListener('DOMContentLoaded', function () {
     const importFileInput = document.getElementById('import-file-input');
     const toggleViewBtn = document.getElementById('toggle-view-btn');
     const searchInput = document.getElementById('search-input');
+    const gameFinishedInput = document.getElementById('game-finished-input');
+    const gamePlatinumInput = document.getElementById('game-platinum-input');
 
     let games = JSON.parse(localStorage.getItem('games')) || [];
     let gameToRemove = null;
@@ -57,16 +59,22 @@ document.addEventListener('DOMContentLoaded', function () {
                 ? `<img src="${game.imageUrl}" class="game-image" alt="${game.name}" onerror="this.parentNode.innerHTML='<div class=\'game-image\' style=\'background:var(--steam-gray);display:flex;align-items:center;justify-content:center;\'><i class=\'fas fa-gamepad\'></i></div>'">`
                 : `<div class="game-image" style="background:var(--steam-gray);display:flex;align-items:center;justify-content:center;"><i class="fas fa-gamepad"></i></div>`;
 
+            // Ícones de status
+            let statusIcons = '';
+            if (game.finished) {
+                statusIcons += `<span class="status-icon" title="Zerado"><i class="fas fa-check-circle" style="color:#4caf50;"></i></span>`;
+            }
+            if (game.platinum) {
+                statusIcons += `<span class="status-icon" title="Platinado"><i class="fas fa-trophy" style="color:#ffd700;"></i></span>`;
+            }
+
             gameItem.innerHTML = `
                 <div class="rank">${game.originalIndex + 1}</div>
                 ${imageContent}
                 <div class="game-info">
-                    <div class="game-name">${game.name}</div>
+                    <div class="game-name">${game.name} ${statusIcons}</div>
                 </div>
                 <div class="game-actions">
-                    <button class="action-btn edit-btn" data-id="${game.id}" title="Editar">
-                        <i class="fas fa-edit"></i>
-                    </button>
                     <button class="action-btn remove-btn" data-id="${game.id}" title="Remover">
                         <i class="fas fa-trash"></i>
                     </button>
@@ -100,7 +108,8 @@ document.addEventListener('DOMContentLoaded', function () {
             id: Date.now().toString(),
             name: name.trim(),
             imageUrl: imageUrl.trim() || null,
-            pinned: false
+            finished: gameFinishedInput.checked,
+            platinum: gamePlatinumInput.checked
         };
 
         games.unshift(newGame);
@@ -109,6 +118,8 @@ document.addEventListener('DOMContentLoaded', function () {
         showFeedback('Jogo adicionado!');
         gameNameInput.value = '';
         gameImageInput.value = '';
+        gameFinishedInput.checked = false;
+        gamePlatinumInput.checked = false;
         gameNameInput.focus();
     }
 
@@ -117,11 +128,13 @@ document.addEventListener('DOMContentLoaded', function () {
         confirmModal.style.display = 'flex';
     }
 
-    function editGame(id, newName, newImageUrl) {
+    function editGame(id, newName, newImageUrl, finished, platinum) {
         const game = games.find(g => g.id === id);
         if (game && newName.trim()) {
             game.name = newName.trim();
             game.imageUrl = newImageUrl.trim() || null;
+            game.finished = finished;
+            game.platinum = platinum;
             saveGames();
             renderGames();
         }
@@ -222,7 +235,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function getDragAfterElement(container, y) {
-        const draggableElements = [...container.querySelectorAll('.game-item:not(.dragging):not(.pinned)')];
+        const draggableElements = [...container.querySelectorAll('.game-item:not(.dragging)')];
 
         return draggableElements.reduce((closest, child) => {
             const box = child.getBoundingClientRect();
@@ -237,53 +250,6 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function setupEventListeners() {
-        // Remover o listener do botão de fixar
-        // document.querySelectorAll('.pin-btn').forEach(btn => { ... });
-
-        document.querySelectorAll('.edit-btn').forEach(btn => {
-            btn.addEventListener('click', function () {
-                const id = this.dataset.id;
-                const gameItem = this.closest('.game-item');
-                const game = games.find(g => g.id === id);
-
-                gameItem.innerHTML = `
-                    <div class="rank">${gameItem.querySelector('.rank').textContent}</div>
-                    ${game.imageUrl
-                        ? `<img src="${game.imageUrl}" class="game-image" alt="${game.name}">`
-                        : '<div class="game-image" style="background:var(--steam-gray);display:flex;align-items:center;justify-content:center;"><i class="fas fa-gamepad"></i></div>'}
-                    <div class="edit-form">
-                        <input type="text" class="edit-input" value="${game.name}" placeholder="Nome do jogo" autofocus>
-                        <input type="text" class="edit-input" value="${game.imageUrl || ''}" placeholder="URL da imagem (opcional)">
-                        <div class="edit-buttons">
-                            <button type="button" class="save-btn">Salvar</button>
-                            <button type="button" class="cancel-btn">Cancelar</button>
-                        </div>
-                    </div>
-                `;
-
-                const nameInput = gameItem.querySelectorAll('.edit-input')[0];
-                const imageInput = gameItem.querySelectorAll('.edit-input')[1];
-                const saveBtn = gameItem.querySelector('.save-btn');
-                const cancelBtn = gameItem.querySelector('.cancel-btn');
-
-                saveBtn.addEventListener('click', function () {
-                    editGame(id, nameInput.value, imageInput.value);
-                });
-
-                cancelBtn.addEventListener('click', function () {
-                    renderGames();
-                });
-
-                nameInput.addEventListener('keyup', function (e) {
-                    if (e.key === 'Enter') {
-                        editGame(id, nameInput.value, imageInput.value);
-                    } else if (e.key === 'Escape') {
-                        renderGames();
-                    }
-                });
-            });
-        });
-
         document.querySelectorAll('.remove-btn').forEach(btn => {
             btn.addEventListener('click', function () {
                 const id = this.dataset.id;

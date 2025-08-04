@@ -253,28 +253,6 @@ body {
     display: block;
 }
 
-.edit-form {
-    display: flex;
-    flex-direction: column;
-    padding: 10px;
-    background: var(--steam-gray);
-    border-radius: 3px;
-    gap: 10px;
-}
-
-.edit-input {
-    padding: 8px 12px;
-    background: rgba(0, 0, 0, 0.2);
-    border: 1px solid #000;
-    border-radius: 3px;
-    color: var(--steam-text);
-}
-
-.edit-buttons {
-    display: flex;
-    gap: 10px;
-}
-
 .save-btn {
     background: linear-gradient(to bottom, #799905 5%, #536904 95%);
     color: #d2e885;
@@ -490,4 +468,12 @@ body {
     color: #FFD700;
     /* Dourado */
     font-weight: bold;
+}
+
+/* Adicione ao seu style.css */
+.status-icon {
+    margin-left: 6px;
+    cursor: pointer;
+    font-size: 1.1em;
+    vertical-align: middle;
 }
