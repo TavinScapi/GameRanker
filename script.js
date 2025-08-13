@@ -19,6 +19,17 @@ document.addEventListener('DOMContentLoaded', function () {
     let gameToRemove = null;
     let isGridView = JSON.parse(localStorage.getItem('isGridView')) || false;
 
+    // Lista de gêneros
+    const gameGenres = [
+        "Ação", "Ação-Aventura", "Adventure", "Arcade", "Battle Royale",
+        "Cartas", "Casual", "Corrida", "Estratégia", "FPS",
+        "Hack and Slash", "Indie", "Luta", "MMORPG", "MOBA",
+        "Metroidvania", "Musical", "Plataforma", "Puzzle", "RPG",
+        "Roguelike", "Roguelite", "RTS", "Simulação", "Soulslike",
+        "Esportes", "Stealth", "Survival", "Survival Horror", "Terror",
+        "Tiro", "Tower Defense", "Visual Novel", "VR"
+    ];
+
     function renderGames(filter = '') {
         gamesList.innerHTML = '';
 
@@ -69,23 +80,37 @@ document.addEventListener('DOMContentLoaded', function () {
             }
 
             gameItem.innerHTML = `
-                <div class="rank">${game.originalIndex + 1}</div>
-                ${imageContent}
-                <div class="game-info">
-                    <div class="game-name">${game.name} ${statusIcons}</div>
-                </div>
-                <div class="game-actions">
-                    <button class="action-btn remove-btn" data-id="${game.id}" title="Remover">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </div>
-            `;
+    <div class="rank">${game.originalIndex + 1}</div>
+    ${imageContent}
+    <div class="game-info">
+        <div class="game-name">${game.name} ${statusIcons}</div>
+        <div class="game-extra">
+            ${game.score !== null ? `<span class="game-score">${renderStars(game.score)} |</span>` : ''}
+            ${game.genre ? `<span class="game-genre">Gênero: ${game.genre} |</span>` : ''}
+            ${game.dateCompleted ? `<span class="game-date">Concluído: ${game.dateCompleted.split('-').reverse().join('/')}</span>` : ''}
+        </div>
+    </div>
+    <div class="game-actions">
+        <button class="action-btn remove-btn" data-id="${game.id}" title="Remover">
+            <i class="fas fa-trash"></i>
+        </button>
+    </div>
+    <div class="game-popup">
+        <strong>${game.name}</strong><br>
+        ${game.score !== null ? `Nota: ${game.score}<br>` : ''}
+        ${game.genre ? `Gênero: ${game.genre}<br>` : ''}
+        ${game.dateCompleted ? `Concluído em: ${game.dateCompleted.split('-').reverse().join('/')}<br>` : ''}
+        ${game.finished ? 'Zerado<br>' : ''}
+        ${game.platinum ? 'Platinado<br>' : ''}
+    </div>
+`;
 
             gamesList.appendChild(gameItem);
         });
 
         setupEventListeners();
     }
+
 
     function getRankClass(index) {
         if (index === 0) return 'top-1';
@@ -108,6 +133,9 @@ document.addEventListener('DOMContentLoaded', function () {
             id: Date.now().toString(),
             name: name.trim(),
             imageUrl: imageUrl.trim() || null,
+            score: parseInt(document.getElementById('game-score-input').value) || null,
+            genre: document.getElementById('game-genre-input').value.trim() || null,
+            dateCompleted: document.getElementById('game-date-input').value || null,
             finished: gameFinishedInput.checked,
             platinum: gamePlatinumInput.checked
         };
@@ -116,11 +144,37 @@ document.addEventListener('DOMContentLoaded', function () {
         saveGames();
         renderGames();
         showFeedback('Jogo adicionado!');
+
+        // limpa campos
         gameNameInput.value = '';
         gameImageInput.value = '';
+        document.getElementById('game-score-input').value = '0';
+        document.getElementById('game-genre-input').value = '';
+        document.getElementById('game-date-input').value = '';
         gameFinishedInput.checked = false;
         gamePlatinumInput.checked = false;
+        resetStars();
         gameNameInput.focus();
+    }
+
+    function resetStars() {
+        const stars = document.querySelectorAll('.star-rating i');
+        stars.forEach(star => {
+            star.classList.remove('fas');
+            star.classList.add('far');
+        });
+    }
+
+    function renderStars(rating) {
+        let stars = '';
+        for (let i = 1; i <= 5; i++) {
+            if (i <= rating) {
+                stars += '<i class="fas fa-star"></i>';
+            } else {
+                stars += '<i class="far fa-star"></i>';
+            }
+        }
+        return stars;
     }
 
     function removeGame(id) {
@@ -257,6 +311,25 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         });
 
+        // Popup segue o mouse
+        document.querySelectorAll('.game-item').forEach(item => {
+            const popup = item.querySelector('.game-popup');
+            item.addEventListener('mousemove', function (e) {
+                if (popup) {
+                    popup.style.opacity = '1';
+                    popup.style.pointerEvents = 'auto';
+                    popup.style.left = (e.clientX + 15) + 'px';
+                    popup.style.top = (e.clientY + 15) + 'px';
+                }
+            });
+            item.addEventListener('mouseleave', function () {
+                if (popup) {
+                    popup.style.opacity = '0';
+                    popup.style.pointerEvents = 'none';
+                }
+            });
+        });
+
         setupDragAndDrop();
     }
 
@@ -348,5 +421,97 @@ document.addEventListener('DOMContentLoaded', function () {
         URL.revokeObjectURL(url);
     });
 
+    // Função para renderizar o dropdown de gêneros
+    function renderGenreDropdown(filter = '') {
+        const dropdown = document.getElementById('genre-dropdown');
+        dropdown.innerHTML = '';
+
+        const filteredGenres = gameGenres.filter(genre =>
+            genre.toLowerCase().includes(filter.toLowerCase())
+        );
+
+        if (filteredGenres.length === 0) {
+            dropdown.innerHTML = '<div class="genre-option">Nenhum gênero encontrado</div>';
+            return;
+        }
+
+        filteredGenres.forEach(genre => {
+            const option = document.createElement('div');
+            option.className = 'genre-option';
+            option.textContent = genre;
+            option.addEventListener('click', function () {
+                document.getElementById('game-genre-input').value = genre;
+                document.getElementById('game-genre-search').value = genre;
+                dropdown.classList.remove('show');
+            });
+            dropdown.appendChild(option);
+        });
+    }
+
+    // Event listeners para o dropdown de gêneros
+    document.getElementById('game-genre-search').addEventListener('focus', function () {
+        document.getElementById('genre-dropdown').classList.add('show');
+        renderGenreDropdown();
+    });
+
+    document.getElementById('game-genre-search').addEventListener('input', function () {
+        renderGenreDropdown(this.value);
+    });
+
+    document.addEventListener('click', function (e) {
+        if (!e.target.closest('.genre-selector')) {
+            document.getElementById('genre-dropdown').classList.remove('show');
+        }
+    });
+
     renderGames();
+});
+
+// Adicione este código no final do seu event listener DOMContentLoaded
+document.querySelectorAll('.star-rating i').forEach(star => {
+    star.addEventListener('click', function () {
+        const rating = parseInt(this.getAttribute('data-rating'));
+        const stars = document.querySelectorAll('.star-rating i');
+
+        stars.forEach((s, index) => {
+            if (index < rating) {
+                s.classList.remove('far');
+                s.classList.add('fas');
+            } else {
+                s.classList.remove('fas');
+                s.classList.add('far');
+            }
+        });
+
+        document.getElementById('game-score-input').value = rating;
+    });
+
+    star.addEventListener('mouseover', function () {
+        const rating = parseInt(this.getAttribute('data-rating'));
+        const stars = document.querySelectorAll('.star-rating i');
+
+        stars.forEach((s, index) => {
+            if (index < rating) {
+                s.classList.add('hover');
+            } else {
+                s.classList.remove('hover');
+            }
+        });
+    });
+
+    star.addEventListener('mouseout', function () {
+        const currentRating = parseInt(document.getElementById('game-score-input').value);
+        const stars = document.querySelectorAll('.star-rating i');
+
+        stars.forEach((s, index) => {
+            s.classList.remove('hover');
+            if (index < currentRating) {
+                s.classList.remove('far');
+                s.classList.add('fas');
+            } else {
+                s.classList.remove('fas');
+                s.classList.add('far');
+            }
+        });
+    });
 });

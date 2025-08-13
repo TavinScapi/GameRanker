@@ -7,6 +7,9 @@
     <title>GameRanker</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+
+    </style>
 </head>
 
 <body>
@@ -21,21 +24,67 @@
         </div>
 
         <div class="add-game">
-            <div class="input-group">
-                <input type="text" id="game-name-input" placeholder="Nome do jogo" autocomplete="off">
-                <input type="text" id="game-image-input" placeholder="URL da imagem (opcional)" autocomplete="off">
-                <label style="margin-left:10px;">
-                    <input type="checkbox" id="game-finished-input">
-                    Zerado
-                </label>
-                <label style="margin-left:10px;">
-                    <input type="checkbox" id="game-platinum-input">
-                    Platinado
-                </label>
+            <div class="input-grid">
+                <!-- Linha 1: Nome e Imagem -->
+                <div class="input-row">
+                    <div class="input-field wide">
+                        <input type="text" id="game-name-input" placeholder="Nome do jogo" autocomplete="off">
+                    </div>
+                    <div class="input-field wide">
+                        <input type="text" id="game-image-input" placeholder="URL da imagem (opcional)"
+                            autocomplete="off">
+                    </div>
+                </div>
+
+                <!-- Linha 2: Avaliação, Gênero e Data -->
+                <div class="input-row">
+                    <div class="input-field">
+                        <label>Avaliação</label>
+                        <div class="star-rating">
+                            <i class="far fa-star" data-rating="1"></i>
+                            <i class="far fa-star" data-rating="2"></i>
+                            <i class="far fa-star" data-rating="3"></i>
+                            <i class="far fa-star" data-rating="4"></i>
+                            <i class="far fa-star" data-rating="5"></i>
+                            <input type="hidden" id="game-score-input" value="0">
+                        </div>
+                    </div>
+
+                    <div class="input-field">
+                        <label>Gênero</label>
+                        <div class="genre-selector">
+                            <input type="text" id="game-genre-search" placeholder="Selecione..." autocomplete="off">
+                            <div id="genre-dropdown" class="genre-dropdown"></div>
+                            <input type="hidden" id="game-genre-input">
+                        </div>
+                    </div>
+
+                    <div class="input-field">
+                        <label>Data conclusão</label>
+                        <input type="date" id="game-date-input">
+                    </div>
+                </div>
+
+                <!-- Linha 3: Checkboxes e Botão -->
+                <div class="input-row last-row">
+                    <div class="checkboxes">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="game-finished-input">
+                            <span class="checkmark"></span>
+                            Zerado
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="game-platinum-input">
+                            <span class="checkmark"></span>
+                            Platinado
+                        </label>
+                    </div>
+
+                    <button id="add-btn" class="add-button">
+                        <i class="fas fa-plus"></i> Adicionar Jogo
+                    </button>
+                </div>
             </div>
-            <button id="add-btn">
-                <i class="fas fa-plus"></i> Adicionar Jogo
-            </button>
         </div>
 
         <div class="games-utils">
