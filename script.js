@@ -33,7 +33,6 @@ document.addEventListener('DOMContentLoaded', function () {
     function renderGames(filter = '') {
         gamesList.innerHTML = '';
 
-        // Alterna a classe da lista
         if (isGridView) {
             gamesList.classList.add('grid-view');
             toggleViewBtn.innerHTML = '<i class="fas fa-list"></i>';
@@ -42,12 +41,10 @@ document.addEventListener('DOMContentLoaded', function () {
             toggleViewBtn.innerHTML = '<i class="fas fa-th-large"></i>';
         }
 
-        // Filtra os jogos pelo nome
         const filteredGames = games
             .map((game, index) => ({ ...game, originalIndex: index }))
             .filter(game => game.name.toLowerCase().includes(filter.toLowerCase()));
 
-        // Atualiza a contagem de jogos
         gamesCount.textContent = `Jogos na lista: ${filteredGames.length}`;
 
         if (filteredGames.length === 0) {
@@ -70,7 +67,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 ? `<img src="${game.imageUrl}" class="game-image" alt="${game.name}" onerror="this.parentNode.innerHTML='<div class=\'game-image\' style=\'background:var(--steam-gray);display:flex;align-items:center;justify-content:center;\'><i class=\'fas fa-gamepad\'></i></div>'">`
                 : `<div class="game-image" style="background:var(--steam-gray);display:flex;align-items:center;justify-content:center;"><i class="fas fa-gamepad"></i></div>`;
 
-            // Ícones de status
             let statusIcons = '';
             if (game.finished) {
                 statusIcons += `<span class="status-icon" title="Zerado"><i class="fas fa-check-circle" style="color:#4caf50;"></i></span>`;
@@ -80,37 +76,39 @@ document.addEventListener('DOMContentLoaded', function () {
             }
 
             gameItem.innerHTML = `
-    <div class="rank">${game.originalIndex + 1}</div>
-    ${imageContent}
-    <div class="game-info">
-        <div class="game-name">${game.name} ${statusIcons}</div>
-        <div class="game-extra">
-            ${game.score !== null ? `<span class="game-score">${renderStars(game.score)} |</span>` : ''}
-            ${game.genre ? `<span class="game-genre">Gênero: ${game.genre} |</span>` : ''}
-            ${game.dateCompleted ? `<span class="game-date">Concluído: ${game.dateCompleted.split('-').reverse().join('/')}</span>` : ''}
-        </div>
-    </div>
-    <div class="game-actions">
-        <button class="action-btn remove-btn" data-id="${game.id}" title="Remover">
-            <i class="fas fa-trash"></i>
-        </button>
-    </div>
-    <div class="game-popup">
-        <strong>${game.name}</strong><br>
-        ${game.score !== null ? `Nota: ${game.score}<br>` : ''}
-        ${game.genre ? `Gênero: ${game.genre}<br>` : ''}
-        ${game.dateCompleted ? `Concluído em: ${game.dateCompleted.split('-').reverse().join('/')}<br>` : ''}
-        ${game.finished ? 'Zerado<br>' : ''}
-        ${game.platinum ? 'Platinado<br>' : ''}
-    </div>
-`;
+                <div class="rank">${game.originalIndex + 1}</div>
+                ${imageContent}
+                <div class="game-info">
+                    <div class="game-name">${game.name} ${statusIcons}</div>
+                    <div class="game-extra">
+                        ${game.score !== null ? `<span class="game-score">${renderStars(game.score)} |</span>` : ''}
+                        ${game.genre ? `<span class="game-genre">Gênero: ${game.genre} |</span>` : ''}
+                        ${game.dateCompleted ? `<span class="game-date">Concluído: ${game.dateCompleted.split('-').reverse().join('/')}</span>` : ''}
+                    </div>
+                </div>
+                <div class="game-actions">
+                    <button class="action-btn edit-btn" data-id="${game.id}" title="Editar">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="action-btn remove-btn" data-id="${game.id}" title="Remover">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+                <div class="game-popup">
+                    <strong>${game.name}</strong><br>
+                    ${game.score !== null ? `Nota: ${renderStars(game.score)}<br>` : ''}
+                    ${game.genre ? `Gênero: ${game.genre}<br>` : ''}
+                    ${game.dateCompleted ? `Concluído em: ${game.dateCompleted.split('-').reverse().join('/')}<br>` : ''}
+                    ${game.finished ? 'Zerado<br>' : ''}
+                    ${game.platinum ? 'Platinado<br>' : ''}
+                </div>
+            `;
 
             gamesList.appendChild(gameItem);
         });
 
         setupEventListeners();
     }
-
 
     function getRankClass(index) {
         if (index === 0) return 'top-1';
@@ -127,7 +125,10 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function addGame(name, imageUrl) {
-        if (!name.trim()) return;
+        if (!name.trim()) {
+            showFeedback('Digite o nome do jogo!');
+            return;
+        }
 
         const newGame = {
             id: Date.now().toString(),
@@ -144,12 +145,15 @@ document.addEventListener('DOMContentLoaded', function () {
         saveGames();
         renderGames();
         showFeedback('Jogo adicionado!');
+        clearForm();
+    }
 
-        // limpa campos
+    function clearForm() {
         gameNameInput.value = '';
         gameImageInput.value = '';
         document.getElementById('game-score-input').value = '0';
         document.getElementById('game-genre-input').value = '';
+        document.getElementById('game-genre-search').value = '';
         document.getElementById('game-date-input').value = '';
         gameFinishedInput.checked = false;
         gamePlatinumInput.checked = false;
@@ -182,48 +186,62 @@ document.addEventListener('DOMContentLoaded', function () {
         confirmModal.style.display = 'flex';
     }
 
-    function editGame(id, newName, newImageUrl, finished, platinum) {
-        const game = games.find(g => g.id === id);
-        if (game && newName.trim()) {
-            game.name = newName.trim();
-            game.imageUrl = newImageUrl.trim() || null;
-            game.finished = finished;
-            game.platinum = platinum;
-            saveGames();
-            renderGames();
-        }
+    function setupEditModal(game) {
+        document.getElementById('game-name-input').value = game.name;
+        document.getElementById('game-image-input').value = game.imageUrl || '';
+        document.getElementById('game-genre-input').value = game.genre || '';
+        document.getElementById('game-genre-search').value = game.genre || '';
+        document.getElementById('game-date-input').value = game.dateCompleted || '';
+        gameFinishedInput.checked = game.finished || false;
+        gamePlatinumInput.checked = game.platinum || false;
+
+        const stars = document.querySelectorAll('.star-rating i');
+        stars.forEach((star, index) => {
+            if (index < (game.score || 0)) {
+                star.classList.remove('far');
+                star.classList.add('fas');
+            } else {
+                star.classList.remove('fas');
+                star.classList.add('far');
+            }
+        });
+        document.getElementById('game-score-input').value = game.score || '0';
+
+        addBtn.innerHTML = '<i class="fas fa-save"></i> Salvar Alterações';
+        addBtn.dataset.editingId = game.id;
+        addBtn.classList.add('editing');
+        document.getElementById('cancel-edit-btn').style.display = 'block';
     }
 
-    function togglePinGame(id) {
+    function cancelEdit() {
+        clearForm();
+        addBtn.innerHTML = '<i class="fas fa-plus"></i> Adicionar Jogo';
+        delete addBtn.dataset.editingId;
+        addBtn.classList.remove('editing');
+        document.getElementById('cancel-edit-btn').style.display = 'none';
+    }
+
+    function saveEditedGame(id) {
         const game = games.find(g => g.id === id);
         if (game) {
-            game.pinned = !game.pinned;
+            game.name = gameNameInput.value.trim();
+            game.imageUrl = gameImageInput.value.trim() || null;
+            game.score = parseInt(document.getElementById('game-score-input').value) || null;
+            game.genre = document.getElementById('game-genre-input').value.trim() || null;
+            game.dateCompleted = document.getElementById('game-date-input').value || null;
+            game.finished = gameFinishedInput.checked;
+            game.platinum = gamePlatinumInput.checked;
+
             saveGames();
             renderGames();
+            showFeedback('Jogo atualizado!');
+            cancelEdit();
         }
     }
 
     function saveGames() {
-        // Não precisa mais ordenar por pinned
         localStorage.setItem('games', JSON.stringify(games));
     }
-
-    function autoScrollDuringDrag(e) {
-        const padding = 100; // margem superior/inferior para ativar scroll
-        const scrollSpeed = 10;
-
-        const y = e.clientY;
-        const windowHeight = window.innerHeight;
-
-        if (y < padding) {
-            // scroll para cima
-            window.scrollBy(0, -scrollSpeed);
-        } else if (y > windowHeight - padding) {
-            // scroll para baixo
-            window.scrollBy(0, scrollSpeed);
-        }
-    }
-
 
     function setupDragAndDrop() {
         const items = document.querySelectorAll('.game-item');
@@ -251,24 +269,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 this.insertBefore(draggingItem, afterElement);
             }
         });
-
-        gamesList.addEventListener('dragover', function (e) {
-            e.preventDefault();
-            autoScrollDuringDrag(e); // ← aqui!
-
-            const draggingItem = document.querySelector('.dragging');
-            if (!draggingItem) return;
-
-            const afterElement = getDragAfterElement(this, e.clientY);
-
-            if (afterElement == null) {
-                this.appendChild(draggingItem);
-            } else {
-                this.insertBefore(draggingItem, afterElement);
-            }
-        });
-
-
 
         gamesList.addEventListener('drop', function (e) {
             e.preventDefault();
@@ -311,7 +311,17 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         });
 
-        // Popup segue o mouse
+        document.querySelectorAll('.edit-btn').forEach(btn => {
+            btn.addEventListener('click', function () {
+                const id = this.dataset.id;
+                const game = games.find(g => g.id === id);
+                if (game) {
+                    setupEditModal(game);
+                    gameNameInput.focus();
+                }
+            });
+        });
+
         document.querySelectorAll('.game-item').forEach(item => {
             const popup = item.querySelector('.game-popup');
             item.addEventListener('mousemove', function (e) {
@@ -333,16 +343,37 @@ document.addEventListener('DOMContentLoaded', function () {
         setupDragAndDrop();
     }
 
+    // Botão de adicionar/salvar
     addBtn.addEventListener('click', function () {
-        addGame(gameNameInput.value, gameImageInput.value);
-    });
-
-    gameNameInput.addEventListener('keypress', function (e) {
-        if (e.key === 'Enter') {
-            addGame(this.value, gameImageInput.value);
+        if (this.classList.contains('editing')) {
+            const id = this.dataset.editingId;
+            saveEditedGame(id);
+        } else {
+            addGame(gameNameInput.value, gameImageInput.value);
         }
     });
 
+    // Botão de cancelar edição
+    const cancelEditBtn = document.createElement('button');
+    cancelEditBtn.id = 'cancel-edit-btn';
+    cancelEditBtn.innerHTML = '<i class="fas fa-times"></i> Cancelar Edição';
+    cancelEditBtn.style.display = 'none';
+    cancelEditBtn.style.marginTop = '10px';
+    cancelEditBtn.style.width = '100%';
+    document.querySelector('.add-game').appendChild(cancelEditBtn);
+
+    cancelEditBtn.addEventListener('click', function () {
+        cancelEdit();
+    });
+
+    // Enter no campo de nome adiciona o jogo
+    gameNameInput.addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') {
+            addBtn.click();
+        }
+    });
+
+    // Modal de confirmação
     modalConfirmBtn.addEventListener('click', function () {
         if (gameToRemove) {
             const li = document.querySelector(`.game-item[data-id="${gameToRemove}"]`);
@@ -383,12 +414,12 @@ document.addEventListener('DOMContentLoaded', function () {
         renderGames();
     });
 
-    // Atualize o listener do campo de busca:
+    // Busca
     searchInput.addEventListener('input', function () {
         renderGames(this.value);
     });
 
-    // Função para exportar como JSON
+    // Exportar JSON
     exportJsonBtn.addEventListener('click', function () {
         const dataStr = JSON.stringify(games, null, 2);
         const blob = new Blob([dataStr], { type: "application/json" });
@@ -403,7 +434,7 @@ document.addEventListener('DOMContentLoaded', function () {
         URL.revokeObjectURL(url);
     });
 
-    // Função para exportar como TXT
+    // Exportar TXT
     exportTxtBtn.addEventListener('click', function () {
         let txt = '';
         games.forEach((game, idx) => {
@@ -421,7 +452,81 @@ document.addEventListener('DOMContentLoaded', function () {
         URL.revokeObjectURL(url);
     });
 
-    // Função para renderizar o dropdown de gêneros
+    // Importar
+    importFileInput.addEventListener('change', function (e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            try {
+                const importedGames = JSON.parse(e.target.result);
+                if (Array.isArray(importedGames)) {
+                    games = importedGames;
+                    saveGames();
+                    renderGames();
+                    showFeedback('Jogos importados com sucesso!');
+                } else {
+                    showFeedback('Formato de arquivo inválido!');
+                }
+            } catch (error) {
+                showFeedback('Erro ao importar jogos!');
+                console.error(error);
+            }
+        };
+        reader.readAsText(file);
+    });
+
+    // Sistema de estrelas
+    document.querySelectorAll('.star-rating i').forEach(star => {
+        star.addEventListener('click', function () {
+            const rating = parseInt(this.getAttribute('data-rating'));
+            const stars = document.querySelectorAll('.star-rating i');
+
+            stars.forEach((s, index) => {
+                if (index < rating) {
+                    s.classList.remove('far');
+                    s.classList.add('fas');
+                } else {
+                    s.classList.remove('fas');
+                    s.classList.add('far');
+                }
+            });
+
+            document.getElementById('game-score-input').value = rating;
+        });
+
+        star.addEventListener('mouseover', function () {
+            const rating = parseInt(this.getAttribute('data-rating'));
+            const stars = document.querySelectorAll('.star-rating i');
+
+            stars.forEach((s, index) => {
+                if (index < rating) {
+                    s.classList.add('hover');
+                } else {
+                    s.classList.remove('hover');
+                }
+            });
+        });
+
+        star.addEventListener('mouseout', function () {
+            const currentRating = parseInt(document.getElementById('game-score-input').value);
+            const stars = document.querySelectorAll('.star-rating i');
+
+            stars.forEach((s, index) => {
+                s.classList.remove('hover');
+                if (index < currentRating) {
+                    s.classList.remove('far');
+                    s.classList.add('fas');
+                } else {
+                    s.classList.remove('fas');
+                    s.classList.add('far');
+                }
+            });
+        });
+    });
+
+    // Dropdown de gêneros
     function renderGenreDropdown(filter = '') {
         const dropdown = document.getElementById('genre-dropdown');
         dropdown.innerHTML = '';
@@ -448,7 +553,6 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // Event listeners para o dropdown de gêneros
     document.getElementById('game-genre-search').addEventListener('focus', function () {
         document.getElementById('genre-dropdown').classList.add('show');
         renderGenreDropdown();
@@ -464,54 +568,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
+    // Inicialização
     renderGames();
-});
-
-// Adicione este código no final do seu event listener DOMContentLoaded
-document.querySelectorAll('.star-rating i').forEach(star => {
-    star.addEventListener('click', function () {
-        const rating = parseInt(this.getAttribute('data-rating'));
-        const stars = document.querySelectorAll('.star-rating i');
-
-        stars.forEach((s, index) => {
-            if (index < rating) {
-                s.classList.remove('far');
-                s.classList.add('fas');
-            } else {
-                s.classList.remove('fas');
-                s.classList.add('far');
-            }
-        });
-
-        document.getElementById('game-score-input').value = rating;
-    });
-
-    star.addEventListener('mouseover', function () {
-        const rating = parseInt(this.getAttribute('data-rating'));
-        const stars = document.querySelectorAll('.star-rating i');
-
-        stars.forEach((s, index) => {
-            if (index < rating) {
-                s.classList.add('hover');
-            } else {
-                s.classList.remove('hover');
-            }
-        });
-    });
-
-    star.addEventListener('mouseout', function () {
-        const currentRating = parseInt(document.getElementById('game-score-input').value);
-        const stars = document.querySelectorAll('.star-rating i');
-
-        stars.forEach((s, index) => {
-            s.classList.remove('hover');
-            if (index < currentRating) {
-                s.classList.remove('far');
-                s.classList.add('fas');
-            } else {
-                s.classList.remove('fas');
-                s.classList.add('far');
-            }
-        });
-    });
 });

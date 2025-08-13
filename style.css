@@ -175,11 +175,6 @@ body {
     margin-right: 3px;
 }
 
-
-
-
-
-
 .input-grid {
     display: flex;
     flex-direction: column;
@@ -725,4 +720,47 @@ body {
 
 .game-item:hover .game-popup {
     opacity: 1;
+}
+
+
+/* Estilo para o botão de edição */
+.edit-btn {
+    background: transparent;
+    border: none;
+    color: var(--steam-text-light);
+    cursor: pointer;
+    font-size: 16px;
+    margin-right: 8px;
+    transition: all 0.2s;
+}
+
+.edit-btn:hover {
+    color: var(--steam-accent);
+}
+
+/* Estilo para o botão de cancelar */
+#cancel-edit-btn {
+    background: linear-gradient(to bottom, #a93838 5%, #6d2828 95%);
+    color: #ffb3b3;
+    border: none;
+    border-radius: 3px;
+    padding: 10px 15px;
+    font-size: 14px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.2s;
+}
+
+#cancel-edit-btn:hover {
+    background: linear-gradient(to bottom, #c23d3d 5%, #8a2e2e 95%);
+}
+
+/* Destaque quando estiver editando */
+.add-game.editing-mode {
+    border: 2px solid var(--steam-accent);
+}
+
+button.editing {
+    background: linear-gradient(to bottom, #1a6ea0 5%, #104b73 95%) !important;
+    color: #b3d9ff !important;
 }
