@@ -764,3 +764,28 @@ button.editing {
     background: linear-gradient(to bottom, #1a6ea0 5%, #104b73 95%) !important;
     color: #b3d9ff !important;
 }
+
+
+/* Responsividade do formulário */
+@media (max-width: 768px) {
+    .input-row {
+        flex-direction: column; /* empilha os campos */
+        align-items: stretch;   /* ocupa 100% da largura */
+        gap: 10px;
+    }
+
+    .input-row.last-row {
+        flex-direction: column; /* checkboxes + botão também ficam em coluna */
+        align-items: stretch;
+        gap: 15px;
+    }
+
+    .checkboxes {
+        flex-direction: column; /* checkboxes um embaixo do outro */
+        gap: 10px;
+    }
+
+    .add-game button {
+        width: 100%; /* botão ocupa toda largura */
+    }
+}
