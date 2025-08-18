@@ -120,6 +120,7 @@
         </div>
 
         <div class="games-utils">
+            <!-- Linha de cima -->
             <div>
                 <button id="export-json-btn"><i class="fas fa-download"></i> Exportar JSON</button>
                 <button id="export-txt-btn"><i class="fas fa-file-alt"></i> Exportar TXT</button>
@@ -127,12 +128,22 @@
                     <i class="fas fa-upload"></i> Importar
                     <input type="file" id="import-file-input" accept=".json,.txt" style="display:none;">
                 </label>
+                <!-- Botão de grade só aparece junto aqui em telas grandes -->
                 <button id="toggle-view-btn" title="Alternar exibição">
                     <i class="fas fa-th-large"></i>
                 </button>
             </div>
-            <span id="games-count"></span>
+
+            <!-- Linha de baixo (apenas em telas pequenas via CSS) -->
+            <div class="games-utils-bottom">
+                <button id="toggle-view-btn-mobile" title="Alternar exibição">
+                    <i class="fas fa-th-large"></i>
+                </button>
+                <span id="games-count"></span>
+            </div>
         </div>
+
+
 
         <input type="text" id="search-input" placeholder="Buscar jogo..." autocomplete="off"
             style="width:100%;margin-bottom:18px;padding:8px 12px;border-radius:4px;border:1px solid var(--steam-highlight);background:var(--steam-gray);color:var(--steam-text);font-size:15px;">
